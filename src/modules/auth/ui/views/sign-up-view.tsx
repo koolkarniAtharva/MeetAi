@@ -5,9 +5,10 @@ import { useForm } from "react-hook-form";
 import { OctagonAlertIcon } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
+import {FaGithub,FaGoogle} from "react-icons/fa";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -22,45 +23,69 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-const formSchema = z.object({
+const formSchema = z
+.object({
   name: z.string().min(1, { message: "Name is Required" }),
   email: z.string().email(),
-  password: z.string().min(1, { message: "Password is required" }),
-  confirmPassword: z.string().min(1, { message: "Password is required" }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-export const SignUpview = () => {
-  const router = useRouter();
-  const [Pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name:"",
-      email: "",
-      password: "",
-      confirmPassword:"",
-    },
+    password: z.string().min(1, { message: "Password is required" }),
+    confirmPassword: z.string().min(1, { message: "Password is required" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
   });
-
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setError(null);
-    setPending(true);
+  
+  export const SignUpview = () => {
+    const [Pending, setPending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
+    
+    const form = useForm<z.infer<typeof formSchema>>({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      },
+    });
+    
+    const onSubmit = (data: z.infer<typeof formSchema>) => {
+      setError(null);
+      setPending(true);
 
     authClient.signUp.email(
       {
         name: data.name,
         email: data.email,
         password: data.password,
+        callbackURL:"/",
       },
       {
         onSuccess: () => {
           setPending(false);
           router.push("/");
+        },
+        onError: ({ error }) => {
+          setError(error.message);
+          setPending(false); // Ensure button is re-enabled after error
+        },
+      }
+    );
+  };
+
+  const onSocial = (provider: "github"| "google" ) => {
+    setError(null);
+    setPending(true);
+
+    authClient.signIn.social(
+      {
+        provider:provider,
+        callbackURL:"/",
+      },
+      {
+        onSuccess: () => {
+          setPending(false);
         },
         onError: ({ error }) => {
           setError(error.message);
@@ -78,7 +103,9 @@ export const SignUpview = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col items-center text-center">
-                  <h1 className=" text-2xl font-bold ">Let&apos;s get Started</h1>
+                  <h1 className=" text-2xl font-bold ">
+                    Let&apos;s get Started
+                  </h1>
                   <p className=" text-muted-foreground text-balance">
                     Create your Account
                   </p>
@@ -180,21 +207,23 @@ export const SignUpview = () => {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button
+                <Button
                     disabled={Pending}
+                    onClick={() => onSocial("google")}
                     variant={"outline"}
                     type="button"
                     className="w-full"
                   >
-                    Google
+                    <FaGoogle/>
                   </Button>
                   <Button
                     disabled={Pending}
+                    onClick={() => onSocial("github")}
                     variant={"outline"}
                     type="button"
                     className="w-full"
                   >
-                    Github
+                    <FaGithub/>
                   </Button>
                 </div>
                 <div className="text-center text-sm">
