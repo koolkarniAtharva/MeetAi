@@ -1,30 +1,73 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { ErrorState } from "@/components/Error-state";
 import { LoadingState } from "@/components/loading-state";
 import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { AgentIdViewHeader } from "../components/agent-id-view-header";
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { Badge } from "@/components/ui/badge";
 import { VideoIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useConfirm } from "@/hooks/use-comfirm";
+import { useState } from "react";
+import { UpdateAgentDialogue } from "../components/update-agent-dialogue.";
 
 interface Props{
     agentId: string;
 };
 
 export const AgentIdView = ({ agentId }: Props)=>{
+    const router= useRouter();
     const trpc= useTRPC();
+    const queryClinet = useQueryClient();
+
+    const [UpdateAgentDialogOpen, setUpdateAgentDialogOpen] = useState(false)
 
     const {data} = useSuspenseQuery(trpc.agents.getOne.queryOptions({ id: agentId }));
 
+    const removeAgent = useMutation(
+        trpc.agents.remove.mutationOptions({
+            onSuccess:async () => {
+                queryClinet.invalidateQueries(trpc.agents.getMany.queryOptions({}));
+                // TODO : Invalidate free tier usage
+                router.push("/agents");
+            },
+            onError:(error)=>{
+                toast.error(error.message);
+            },
+        }),
+    );
+
+    const[RemoveConfirmation , comfirmRemove] = useConfirm(
+        "Are you sure you want to remove this agent?",
+        `This action will remove ${data.meetingCount} associated meetings.`
+    )
+
+    const handleRemoveAgent = async()=>{
+        const ok = await comfirmRemove();
+
+        if(!ok) return;
+
+        await removeAgent.mutateAsync({id:agentId});
+    };
+
     return(
+        <>
+        <RemoveConfirmation/>
+        <UpdateAgentDialogue
+            open={UpdateAgentDialogOpen}
+            onOpenChange={setUpdateAgentDialogOpen}
+            initialValues={data}
+        />
         <div className="flex-1 py-4 px-4 md:px-8 flex flex-col gap-4">
             <AgentIdViewHeader 
             agentId =  {agentId}
             agentName={data.name} 
-            onEdit={()=>{}}
-            onRemove={()=>{}}
+            onEdit={()=>setUpdateAgentDialogOpen(true)}
+            onRemove={handleRemoveAgent}
             />
         
             <div className="bg-white rounded-lg border">
@@ -34,13 +77,13 @@ export const AgentIdView = ({ agentId }: Props)=>{
                             variant="botttsNeutral"
                             seed={data.name}
                             className="size-10 "
-                        />
+                            />
                         <h2 className="text-2xl font-medium">{data.name}</h2>
                     </div>
                     <Badge
                         variant="outline"
                         className="flex items-center gap-x-2 [&>svg]:size-4"
-                    >
+                        >
                         <VideoIcon className="text-blue-700" />
                         {data.meetingCount} {data.meetingCount===1 ? "meeting":"meetings"}
                     </Badge>
@@ -52,6 +95,7 @@ export const AgentIdView = ({ agentId }: Props)=>{
             </div>
         </div>
         
+</>
     )
 }
 
