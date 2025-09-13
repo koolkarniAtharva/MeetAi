@@ -90,7 +90,7 @@ export const agentsRouter = createTRPCRouter({
         .where(
           and(
             eq(agents.userId, ctx.auth.user.id),
-            search ? ilike(agents.name, `%$(search)%`) : undefined
+            search ? ilike(agents.name, `%${search}%`) : undefined
           )
         )
         .orderBy(desc(agents.createdAt), desc(agents.id))
@@ -103,7 +103,7 @@ export const agentsRouter = createTRPCRouter({
         .where(
           and(
             eq(agents.userId, ctx.auth.user.id),
-            search ? ilike(agents.name, `%$(search)%`) : undefined
+            search ? ilike(agents.name, `%${search}%`) : undefined
           )
         );
 
@@ -114,8 +114,6 @@ export const agentsRouter = createTRPCRouter({
         total: total.count,
         totalPages,
       };
-
-      return data;
     }),
   create: protectedProcedure
     .input(agentsInsertSchema)
