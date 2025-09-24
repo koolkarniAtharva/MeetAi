@@ -24,12 +24,12 @@ import{
 interface AgentsFormProps{
     onSuccess?:() => void;
     onCancel?:() => void;
-    initailValues?: AgentGetOne;
+    initialValues?: AgentGetOne;
 };
 export const AgentForm = ({
     onSuccess,
     onCancel,
-    initailValues,
+    initialValues,
 }:AgentsFormProps)=>{
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -56,9 +56,9 @@ const updateAgent = useMutation(
                 await queryClient.invalidateQueries(
                     trpc.agents.getMany.queryOptions({}),
                 );
-                if(initailValues?.id){
+                if(initialValues?.id){
                     await queryClient.invalidateQueries(
-                        trpc.agents.getOne.queryOptions({id:initailValues.id}),
+                        trpc.agents.getOne.queryOptions({id:initialValues.id}),
                     );
                 }
                 onSuccess?.();
@@ -74,16 +74,16 @@ const updateAgent = useMutation(
     const form = useForm<z.infer<typeof agentsInsertSchema>>({
         resolver:zodResolver(agentsInsertSchema),
         defaultValues:{
-            name:initailValues?.name??"",
-            instructions:initailValues?.instructions??"",
+            name:initialValues?.name??"",
+            instructions:initialValues?.instructions??"",
         },
     });
-    const isEdit = !!initailValues?.id;
+    const isEdit = !!initialValues?.id;
     const isPending = createAgent.isPending || updateAgent.isPending;
 
     const onSubmit = (values:z.infer<typeof agentsInsertSchema>)=>{
         if(isEdit){
-            updateAgent.mutate({...values, id: initailValues.id});
+            updateAgent.mutate({...values, id: initialValues.id});
         }
         else{
             createAgent.mutate(values);

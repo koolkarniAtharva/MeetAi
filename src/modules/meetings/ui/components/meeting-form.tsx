@@ -28,12 +28,12 @@ import { NewAgentDialogue } from "@/modules/agents/ui/components/new-agent-dialo
 interface MeetingFormProps{
     onSuccess?:(id?:string) => void;
     onCancel?:() => void;
-    initailValues?: MeetingGetOne;
+    initialValues?: MeetingGetOne;
 };
 export const MeetingForm = ({
     onSuccess,  
     onCancel,
-    initailValues,
+    initialValues,
 }:MeetingFormProps)=>{
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -71,9 +71,9 @@ const updateMeeting = useMutation(
                 await queryClient.invalidateQueries(
                     trpc.meetings.getMany.queryOptions({}),
                 );
-                if(initailValues?.id){
+                if(initialValues?.id){
                     await queryClient.invalidateQueries(
-                        trpc.meetings.getOne.queryOptions({id:initailValues.id}),
+                        trpc.meetings.getOne.queryOptions({id:initialValues.id}),
                     );
                 }
                 onSuccess?.();
@@ -89,16 +89,16 @@ const updateMeeting = useMutation(
     const form = useForm<z.infer<typeof meetingsInsertSchema>>({
         resolver:zodResolver(meetingsInsertSchema),
         defaultValues:{
-            name:initailValues?.name??"",
-            agentId:initailValues?.agentId??"",
+            name:initialValues?.name??"",
+            agentId:initialValues?.agentId??"",
         },
     });
-    const isEdit = !!initailValues?.id;
+    const isEdit = !!initialValues?.id;
     const isPending = createMeeting.isPending || updateMeeting.isPending;
 
     const onSubmit = (values:z.infer<typeof meetingsInsertSchema>)=>{
         if(isEdit){
-            updateMeeting.mutate({...values, id: initailValues.id});
+            updateMeeting.mutate({...values, id: initialValues.id});
         }
         else{
             createMeeting.mutate(values);
