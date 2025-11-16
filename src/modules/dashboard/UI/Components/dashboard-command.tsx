@@ -1,3 +1,4 @@
+"use client"
 import {
   CommandResponsiveDialog,
   CommandInput,

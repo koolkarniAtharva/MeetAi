@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { humanizeDuration } from "humanize-duration";
+import  humanizeDuration  from "humanize-duration";
 import { MeetingGetMany } from "../../types";
 import { ColumnDef } from "@tanstack/react-table";
 import { GeneratedAvatar } from "@/components/generated-avatar";
